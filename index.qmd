@@ -1,0 +1,141 @@
+---
+title: "Calidad de café"
+author: "Mónica Ruiz Umaña"
+format: 
+  html: 
+    toc: true
+    theme: "lux"
+    language: es
+---
+# INTRODUCCIÓN
+En el siguiente documento se muestran datos relacionados a la calidad del café en distintos países del mundo. Se cuenta con una serie de estadísticas que son las variables para determinar la calidad del café, como: la altura de las cosechas, puntajes totales de la producción, variedad, certificación, entre otros. 
+
+Las tablas y las estadísticas son extraídas de El Coffe Quality Institute (CQI).Los datos se encuentran en la siguiente direción: https://github.com/fatih-boyar/coffee-quality-data-CQI. Gracias a esta información obtenida se relizaron 3 gráficos: un gráfico de barras, otro de dispersión y por último uno de cajas. 
+
+# CARGA DE DATOS
+
+```{r}
+#| label: carga-datos
+#| warning: false
+#| code-fold: true
+#| menssage: false
+library(tidyverse)
+library(plotly)
+library(DT)
+library(gapminder)
+# Carga de ggthemes
+library(ggthemes)
+# Carga de hbrthemes
+library(hrbrthemes)
+library(readr)
+library(ggplot2)
+library(cowplot)
+```
+
+# TABLA DE DATOS
+```{r}
+#| label: tabla-datos
+#| warning: false
+#| code-fold: true
+#| message: false
+
+tabla_cafe <- "https://raw.githubusercontent.com/gf0604-procesamientodatosgeograficos/2023-i/main/datos/cqi/coffee-quality.csv"
+datos_cafe <- read.csv(tabla_cafe)
+
+
+datatable(datos_cafe[, c(
+  "Country_of_Origin", 
+  "Variety", 
+  "Color", 
+  "Altitude", 
+  "Total_Cup_Points")],
+  options = list(pageLength = 5,
+                 lengthMenu = c(5, 25, 50)),
+  rownames = FALSE)
+
+```
+
+
+# GRÁFICOS ESTADÍSTICOS
+
+## Histograma
+
+```{r}
+#| label: histograma
+#| warning: false
+#| code-fold: true
+#| message: false 
+histograma_cafe <-
+  ggplot(datos_cafe, aes(x = Total_Cup_Points)) +
+  geom_histogram(
+    aes(
+      text = paste0(
+        "Ditribución", round(after_stat(x), 2), "\n",
+        "Frecuencia: ", after_stat(count)
+      ),
+      y = after_stat(density) 
+    ),
+    bins = 10
+  ) +
+  geom_density() +
+  scale_y_continuous(labels = scales::label_comma()) + 
+  ggtitle("Distribución del Puntaje Total") +
+  xlab("Total") +
+  ylab("Frecuencia") +
+  labs(subtitle = "Datos de Coffee Quality Institute (CQI)", caption = "Fuente: Fatih Boyar") +
+  theme_gray()
+
+# Plotly
+ggplotly(histograma_cafe, tooltip = "text") |>
+  config(locale = 'es')
+```
+
+## Gráfico de dispersión
+
+```{r}
+#| label: dispersión
+#| warning: false
+#| code-fold: true
+#| message: false
+grafico_dispersion_cafe <-
+  ggplot(datos_cafe, aes(x = Altitude, y = Total_Cup_Points)) +
+  geom_point(aes(
+    text = paste0(
+      "País: ", Country_of_Origin, "\n",
+      "Altitud", round(Altitude, 2), "\n",
+        "Puntaje Total", round(Total_Cup_Points, 2), "\n"
+    )
+  )) +
+  geom_smooth(method = "lm") +
+  ggtitle("Puntaje Total vrs Altitud") +
+  xlab("Altitud") +
+  ylab("Puntaje Total") +
+  labs(caption = "Fuente: Fatih Boyar") +
+  theme_gray()  
+
+# Plotly
+ggplotly(grafico_dispersion_cafe, tooltip = "text") |>
+  config(locale = 'es')
+```
+
+## Gráfico de caja
+```{r}
+#| label: gráfico_caja
+#| warning: false
+#| code-fold: true
+#| message: false
+# Gráfico de caja de Puntaje total por color
+grafico_caja_cafe <-
+  ggplot(datos_cafe, aes(x = Color, y = Total_Cup_Points)) +
+  geom_boxplot() +
+  ggtitle("Estadísticas de Puntaje Total por Color") +
+  xlab("Color") +
+  ylab("Puntaje Total") +
+  labs(subtitle = "Datos de Coffee Quality Institute (CQI)", caption = "Fuente: Fatih Boyar") +
+  theme_gray()
+
+# Gráfico de caja plotly
+ggplotly(grafico_caja_cafe) |> 
+  config(locale = 'es')
+```
+
